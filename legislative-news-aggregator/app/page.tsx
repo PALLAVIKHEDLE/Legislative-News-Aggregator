@@ -1,101 +1,227 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { NewsCard } from './components/NewsCard';
+import { FilterBar } from './components/FilterBar';
+import { NewsModal } from './components/NewsModal';
+import { Pagination } from './components/Pagination';
+import { AddArticleModal } from './components/AddArticleModal';
+
+interface Article {
+  id: string;
+  title: string;
+  content: string;
+  state: string;
+  topic: string;
+  source: string;
+  url: string;
+  publishedAt: string;
+}
+
+interface PaginationData {
+  total: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+}
+
+interface ApiResponse {
+  articles: Article[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [pagination, setPagination] = useState<PaginationData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState('');
+  const [topic, setTopic] = useState('');
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const fetchArticles = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Log the current state values
+      console.log('Fetching articles with:', { state, topic, search, currentPage });
+
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', '6');
+      
+      if (state) params.append('state', state);
+      if (topic) params.append('topic', topic);
+      if (search) params.append('search', search);
+
+      const response = await fetch(`/api/news?${params}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch articles');
+      }
+
+      const data: ApiResponse = await response.json();
+      console.log('Received data:', data); // Log the response data
+      setArticles(data.articles);
+      setPagination({
+        total: data.total,
+        totalPages: data.totalPages,
+        currentPage: data.page,
+        limit: data.limit
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, state, topic, search]);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
+
+  const handleStateChange = (newState: string) => {
+    console.log('State changed to:', newState); // Log state change
+    setState(newState);
+  };
+
+  const handleTopicChange = (newTopic: string) => {
+    console.log('Topic changed to:', newTopic); // Log topic change
+    setTopic(newTopic);
+  };
+
+  const handleSearchChange = (newSearch: string) => {
+    console.log('Search changed to:', newSearch); // Log search change
+    setSearch(newSearch);
+  };
+
+  // Use effect to trigger fetch when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchArticles();
+  }, [state, topic, search]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    fetchArticles();
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAddArticle = async (newArticle: Article) => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/news', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newArticle),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add article');
+      }
+
+      setShowAddModal(false);
+      setCurrentPage(1); // Go back to first page
+      await fetchArticles(); // Refresh the list
+      
+      // Show success message
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add article');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <header className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-4">Legislative News Aggregator</h1>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn btn-primary"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Add Article
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <FilterBar
+          state={state}
+          setState={handleStateChange}
+          topic={topic}
+          setTopic={handleTopicChange}
+          search={search}
+          setSearch={handleSearchChange}
+          onSubmit={handleSearch}
+        />
+      </header>
+
+      {error && (
+        <div className="text-red-500 text-center mb-4">
+          {error}
+        </div>
+      )}
+
+      <div className="news-grid">
+        {loading ? (
+          <div className="loading-container">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        ) : articles.length === 0 ? (
+          <div className="no-results">
+            No articles found. Try adjusting your search criteria.
+          </div>
+        ) : (
+          articles.map((article) => (
+            <NewsCard
+              key={article.id}
+              article={article}
+              onClick={() => setSelectedArticle(article)}
+            />
+          ))
+        )}
+      </div>
+
+      {pagination && !loading && articles.length > 0 && (
+        <div style={{marginTop:20}}>
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalResults={pagination.total}
+            onPageChange={handlePageChange}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+      )}
+
+      {selectedArticle && (
+        <NewsModal
+          article={selectedArticle}
+          onClose={() => setSelectedArticle(null)}
+        />
+      )}
+
+      {showAddModal && (
+        <AddArticleModal
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleAddArticle}
+        />
+      )}
     </div>
   );
 }

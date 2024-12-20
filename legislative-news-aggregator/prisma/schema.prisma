@@ -1,0 +1,20 @@
+// This is your Prisma schema file
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model NewsArticle {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String
+  state       String
+  topic       String
+  source      String
+  url         String
+  publishedAt DateTime
+}
