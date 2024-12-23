@@ -27,6 +27,16 @@ interface SearchParams {
   limit?: number;
 }
 
+interface NewsArticle {
+  title: string;
+  description?: string;
+  content?: string;
+  source?: { name: string };
+  url: string;
+  urlToImage?: string;
+  publishedAt: string;
+}
+
 const getStateName = (abbr: string): string => {
   const state = states.find(s => s.abbr === abbr);
   return state ? state.name : '';
@@ -36,7 +46,7 @@ const buildStateQuery = (stateName: string, stateAbbr: string): string => {
   return `("${stateName}" OR "${stateAbbr}") AND (legislature OR governor OR "state bill" OR "state law" OR "state senate")`;
 };
 
-const isStateRelevant = (article: any, stateName: string, stateAbbr: string): boolean => {
+const isStateRelevant = (article: NewsArticle, stateName: string, stateAbbr: string): boolean => {
   const statePattern = new RegExp(`\\b(${stateName}|${stateAbbr})\\b`, 'i');
   const content = [
     article.title,
@@ -130,16 +140,15 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('NewsAPI Error:', data);
       throw new Error(data.message || 'Failed to fetch news');
     }
 
     // Filter articles for state relevance
     const relevantArticles = params.state
-      ? (data.articles || []).filter(article => 
+      ? (data.articles as NewsArticle[] || []).filter(article => 
           isStateRelevant(article, stateName, stateAbbr)
         )
-      : (data.articles || []);
+      : (data.articles as NewsArticle[] || []);
 
     // Calculate pagination for filtered results
     const startIndex = (params.page - 1) * params.limit;
@@ -147,7 +156,7 @@ export async function GET(request: NextRequest) {
 
     // Transform and store new articles
     const newArticles = await Promise.all(
-      paginatedArticles.map(async (article: any) => {
+      paginatedArticles.map(async (article: NewsArticle) => {
         if (!article.title || !article.url) return null;
 
         const articleData = {
@@ -200,7 +209,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error fetching news:', error);
     return NextResponse.json(
       { error: 'Failed to fetch news articles' },
       { status: 500 }

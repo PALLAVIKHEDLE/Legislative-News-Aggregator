@@ -20,7 +20,9 @@ export function NewsCard({ article, onClick }: NewsCardProps) {
         </div>
         
         <h3 className="news-title">{article.title}</h3>
-        <p className="news-summary">{article.content}</p>
+        {article.content && (
+          <p className="news-summary">{article.content}</p>
+        )}
         
         <div className="news-meta">
           {article.source && <span>{article.source}</span>}

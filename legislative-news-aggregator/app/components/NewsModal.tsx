@@ -10,34 +10,42 @@ export function NewsModal({ article, onClose }: NewsModalProps) {
   if (!article) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <button className="modal-close" onClick={onClose}>×</button>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>&times;</button>
         
         <div className="news-tags">
-          <span className="tag tag-state">{article.state}</span>
-          <span className="tag tag-topic">{article.topic}</span>
+          {article.state && (
+            <span className="tag tag-state">{article.state}</span>
+          )}
+          {article.topic && (
+            <span className="tag tag-topic">{article.topic}</span>
+          )}
         </div>
 
-        <h2 className="news-title">{article.title}</h2>
+        <h2 className="news-title text-2xl">{article.title}</h2>
 
-        <div className="news-content">
-          <p>{article.content}</p>
-        </div>
+        {article.content && (
+          <div className="news-content mt-4">
+            <p>{article.content}</p>
+          </div>
+        )}
 
-        <div className="news-meta">
-          <span>Source: {article.source}</span>
+        <div className="news-meta mt-4">
+          {article.source && (
+            <span>Source: {article.source}</span>
+          )}
           <time dateTime={article.publishedAt}>
             {formatDate(article.publishedAt)}
           </time>
         </div>
 
-        <div className="news-actions">
+        <div className="modal-footer">
           <a
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="read-more-link"
+            className="btn btn-primary"
           >
             Read full article →
           </a>
