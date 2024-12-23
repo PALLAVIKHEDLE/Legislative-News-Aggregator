@@ -1,59 +1,35 @@
 import React from 'react';
 import { states } from '../utils/constants';
+import { NewsFilters, TOPICS } from '../types';
 
 interface FilterBarProps {
-  currentFilters: {
-    state: string;
-    topic: string;
-    search: string;
-  };
-  onFilterChange: (filters: Partial<FilterBarProps['currentFilters']>) => void;
+  currentFilters: NewsFilters;
+  onFilterChange: (filters: Partial<NewsFilters>) => void;
 }
 
 export function FilterBar({ currentFilters, onFilterChange }: FilterBarProps) {
-  const topics = [
-    'All',
-    'Education',
-    'Healthcare',
-    'Environment',
-    'Economy',
-    'Infrastructure',
-    'Technology',
-    'Public Safety',
-    'Housing'
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Trigger the filter change with current values
-    onFilterChange(currentFilters);
-  };
-
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log('State changed to:', e.target.value); // Debug log
     onFilterChange({ state: e.target.value });
   };
 
   const handleTopicChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log('Topic changed to:', e.target.value); // Debug log
     onFilterChange({ topic: e.target.value === 'All' ? '' : e.target.value });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('Search changed to:', e.target.value); // Debug log
     onFilterChange({ search: e.target.value });
   };
 
   return (
     <div className="filter-bar">
-      <form onSubmit={handleSubmit} className="filter-form">
+      <div className="filter-form">
         <div className="filter-group">
-          <label htmlFor="state">State</label>
+          <label htmlFor="state" className="form-label">State</label>
           <select
             id="state"
             value={currentFilters.state}
             onChange={handleStateChange}
-            className="select-input"
+            className="form-input"
           >
             <option value="">All States</option>
             {states.map((state) => (
@@ -65,14 +41,15 @@ export function FilterBar({ currentFilters, onFilterChange }: FilterBarProps) {
         </div>
 
         <div className="filter-group">
-          <label htmlFor="topic">Topic</label>
+          <label htmlFor="topic" className="form-label">Topic</label>
           <select
             id="topic"
             value={currentFilters.topic || 'All'}
             onChange={handleTopicChange}
-            className="select-input"
+            className="form-input"
           >
-            {topics.map((topic) => (
+            <option value="All">All Topics</option>
+            {TOPICS.map((topic) => (
               <option key={topic} value={topic}>
                 {topic}
               </option>
@@ -81,21 +58,24 @@ export function FilterBar({ currentFilters, onFilterChange }: FilterBarProps) {
         </div>
 
         <div className="filter-group">
-          <label htmlFor="search">Search</label>
+          <label htmlFor="search" className="form-label">Search</label>
           <input
             type="text"
             id="search"
             value={currentFilters.search}
             onChange={handleSearchChange}
             placeholder="Search articles..."
-            className="search-input"
+            className="form-input"
           />
         </div>
 
-        <button type="submit" className="btn btn-primary">
-          Search
-        </button>
-      </form>
+        <div className="filter-group">
+          <label className="form-label">&nbsp;</label>
+          <button type="button" className="btn btn-primary">
+            Search
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,33 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-
-interface Article {
-  id: string;
-  title: string;
-  content?: string;
-  state?: string;
-  topic?: string;
-  source?: string;
-  url: string;
-  urlToImage?: string;
-  publishedAt: string;
-}
+import { NewsArticle, NewsFilters } from '../types';
 
 interface NewsResponse {
-  articles: Article[];
+  articles: NewsArticle[];
   total: number;
   page: number;
   limit: number;
 }
 
-interface UseNewsParams {
-  state?: string;
-  topic?: string;
-  search?: string;
-  page?: number;
-  limit?: number;
+class NewsError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NewsError';
+  }
 }
 
-const fetchNews = async (params: UseNewsParams): Promise<NewsResponse> => {
+const fetchNews = async (params: NewsFilters): Promise<NewsResponse> => {
   const searchParams = new URLSearchParams();
   if (params.state) searchParams.append('state', params.state);
   if (params.topic) searchParams.append('topic', params.topic);
@@ -37,12 +25,12 @@ const fetchNews = async (params: UseNewsParams): Promise<NewsResponse> => {
 
   const response = await fetch(`/api/news?${searchParams.toString()}`);
   if (!response.ok) {
-    throw new Error('Network response was not ok');
+    throw new NewsError('Failed to fetch news');
   }
   return response.json();
 };
 
-const addArticle = async (article: Omit<Article, 'id'>): Promise<Article> => {
+const addArticle = async (article: Omit<NewsArticle, 'id'>): Promise<NewsArticle> => {
   const response = await fetch('/api/news', {
     method: 'POST',
     headers: {
@@ -52,13 +40,13 @@ const addArticle = async (article: Omit<Article, 'id'>): Promise<Article> => {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to add article');
+    throw new NewsError('Failed to add article');
   }
 
   return response.json();
 };
 
-export function useNews(params: UseNewsParams = {}) {
+export function useNews(params: NewsFilters = {}) {
   return useQuery(['news', params], () => fetchNews(params), {
     staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
     keepPreviousData: true, // Keep previous data while fetching new data

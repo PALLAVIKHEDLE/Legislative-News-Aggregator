@@ -7,23 +7,27 @@ import { NewsModal } from './components/NewsModal';
 import { Pagination } from './components/Pagination';
 import { AddArticleModal } from './components/AddArticleModal';
 import { useNews, useAddArticle } from './hooks/useNews';
+import { NewsArticle, NewsFilters } from './types';
+import './styles.css';
+
+const ITEMS_PER_PAGE = 6;
 
 export default function Home() {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<NewsFilters>({
     state: '',
     topic: '',
     search: '',
     page: 1,
-    limit: 6
+    limit: ITEMS_PER_PAGE
   });
 
-  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const { data, isLoading, isError } = useNews(filters);
   const { mutate: addArticle } = useAddArticle();
 
-  const handleFilterChange = (newFilters: any) => {
+  const handleFilterChange = (newFilters: Partial<NewsFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
   };
 
@@ -32,31 +36,32 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleAddArticle = async (article: any) => {
+  const handleAddArticle = async (article: Omit<NewsArticle, 'id'>) => {
     try {
       await addArticle(article);
       setShowAddModal(false);
     } catch (error) {
-      console.error('Failed to add article:', error);
+      setShowAddModal(false);
     }
   };
 
-  // Calculate total pages
   const totalPages = data?.total ? Math.ceil(data.total / filters.limit) : 0;
 
   if (isError) {
     return (
-      <div className="text-red-500 text-center mb-4">
-        Error loading news articles
+      <div className="container">
+        <div className="error-message">
+          Error loading news articles. Please try again later.
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <header className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4">Legislative News Aggregator</h1>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+    <div className="container">
+      <header className="header">
+        <h1 className="header-title">Legislative News Aggregator</h1>
+        <div className="flex justify-end mb-4">
           <button
             onClick={() => setShowAddModal(true)}
             className="btn btn-primary"
@@ -70,35 +75,35 @@ export default function Home() {
         />
       </header>
 
-      <div className="news-grid">
+      <main>
         {isLoading ? (
           <div className="loading-container">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className="loading-spinner" />
           </div>
         ) : data?.articles.length === 0 ? (
           <div className="no-results">
             No articles found. Try adjusting your search criteria.
           </div>
         ) : (
-          data?.articles.map((article: any) => (
-            <NewsCard
-              key={article.id || article.url}
-              article={article}
-              onClick={() => setSelectedArticle(article)}
-            />
-          ))
+          <div className="news-grid">
+            {data?.articles.map((article: NewsArticle) => (
+              <NewsCard
+                key={article.id || article.url}
+                article={article}
+                onClick={() => setSelectedArticle(article)}
+              />
+            ))}
+          </div>
         )}
-      </div>
 
-      {data && !isLoading && data.articles.length > 0 && (
-        <div className="mt-8">
+        {data && !isLoading && data.articles.length > 0 && (
           <Pagination
             currentPage={filters.page}
             totalPages={totalPages}
             onPageChange={handlePageChange}
           />
-        </div>
-      )}
+        )}
+      </main>
 
       {selectedArticle && (
         <NewsModal

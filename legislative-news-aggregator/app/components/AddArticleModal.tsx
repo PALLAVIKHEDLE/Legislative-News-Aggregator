@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { states } from '../utils/constants';
+import { NewsArticle, TOPICS } from '../types';
 
 interface AddArticleModalProps {
   onClose: () => void;
-  onSubmit: (article: any) => void;
+  onSubmit: (article: Omit<NewsArticle, 'id'>) => void;
 }
 
 export function AddArticleModal({ onClose, onSubmit }: AddArticleModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<NewsArticle, 'id'>>({
     title: '',
     content: '',
     state: '',
@@ -17,20 +18,9 @@ export function AddArticleModal({ onClose, onSubmit }: AddArticleModalProps) {
     publishedAt: new Date().toISOString().split('T')[0]
   });
 
-  const topics = [
-    'Education',
-    'Healthcare',
-    'Environment',
-    'Economy',
-    'Infrastructure'
-  ];
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      id: Date.now().toString() // Generate a temporary ID
-    });
+    onSubmit(formData);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -106,7 +96,7 @@ export function AddArticleModal({ onClose, onSubmit }: AddArticleModalProps) {
                 className="form-input"
               >
                 <option value="">Select Topic</option>
-                {topics.map((topic) => (
+                {TOPICS.map((topic) => (
                   <option key={topic} value={topic}>
                     {topic}
                   </option>
@@ -125,51 +115,44 @@ export function AddArticleModal({ onClose, onSubmit }: AddArticleModalProps) {
                 value={formData.source}
                 onChange={handleChange}
                 className="form-input"
-                placeholder="Enter source"
+                placeholder="Enter source name"
               />
             </div>
 
             <div className="form-group">
-              <label htmlFor="publishedAt">Published Date</label>
+              <label htmlFor="url">URL</label>
               <input
-                type="date"
-                id="publishedAt"
-                name="publishedAt"
-                value={formData.publishedAt}
+                type="url"
+                id="url"
+                name="url"
+                value={formData.url}
                 onChange={handleChange}
                 required
                 className="form-input"
+                placeholder="Enter article URL (required)"
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label htmlFor="url">URL</label>
+            <label htmlFor="publishedAt">Published Date</label>
             <input
-              type="url"
-              id="url"
-              name="url"
-              value={formData.url}
+              type="date"
+              id="publishedAt"
+              name="publishedAt"
+              value={formData.publishedAt}
               onChange={handleChange}
               required
               className="form-input"
-              placeholder="Enter article URL (required)"
             />
           </div>
 
-          <div className="button-container">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn btn-secondary"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-            >
+          <div className="modal-footer">
+            <button type="submit" className="btn btn-primary">
               Add Article
+            </button>
+            <button type="button" onClick={onClose} className="btn btn-secondary">
+              Cancel
             </button>
           </div>
         </form>
