@@ -3,20 +3,15 @@ import React from 'react';
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  totalResults: number;
   onPageChange: (page: number) => void;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
-  totalResults,
   onPageChange,
 }) => {
   if (totalPages <= 1) return null;
-
-  const start = (currentPage - 1) * 6 + 1;
-  const end = Math.min(currentPage * 6, totalResults);
 
   const getPageNumbers = () => {
     const pageNumbers = [];
@@ -50,10 +45,20 @@ export const Pagination: React.FC<PaginationProps> = ({
     return pageNumbers;
   };
 
+  const startItem = (currentPage - 1) * 10 + 1;
+  const endItem = Math.min(currentPage * 10, totalPages * 10);
+  const totalItems = totalPages * 10;
+
   return (
     <div className="pagination">
       <div className="pagination-info">
-        Showing {start} - {end} of {totalResults} results
+        {totalItems > 0 ? (
+          <span>
+            Showing {startItem} - {endItem} of {totalItems} results
+          </span>
+        ) : (
+          <span>No results found</span>
+        )}
       </div>
       
       <div className="pagination-controls">

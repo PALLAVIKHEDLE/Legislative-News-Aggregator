@@ -12,17 +12,18 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^6.1.0",
     "axios": "^1.6.2",
     "better-sqlite3": "^9.2.2",
     "next": "15.1.1",
     "node-cron": "^3.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-query": "^3.39.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@prisma/client": "^6.1.0",
     "@types/better-sqlite3": "^7.6.8",
     "@types/node": "^20.17.10",
     "@types/node-cron": "^3.0.11",

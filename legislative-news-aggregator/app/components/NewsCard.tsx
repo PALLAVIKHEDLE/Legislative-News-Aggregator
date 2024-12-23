@@ -11,15 +11,19 @@ export function NewsCard({ article, onClick }: NewsCardProps) {
     <article className="news-card" onClick={() => onClick(article)}>
       <div className="news-card-content">
         <div className="news-tags">
-          <span className="tag tag-state">{article.state}</span>
-          <span className="tag tag-topic">{article.topic}</span>
+          {article.state && article.state.trim() && (
+            <span className="tag tag-state">{article.state}</span>
+          )}
+          {article.topic && article.topic.trim() && (
+            <span className="tag tag-topic">{article.topic}</span>
+          )}
         </div>
         
         <h3 className="news-title">{article.title}</h3>
         <p className="news-summary">{article.content}</p>
         
         <div className="news-meta">
-          <span>{article.source}</span>
+          {article.source && <span>{article.source}</span>}
           <time dateTime={article.publishedAt}>
             {formatDate(article.publishedAt)}
           </time>
