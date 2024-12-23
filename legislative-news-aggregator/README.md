@@ -1,18 +1,33 @@
 ## Development Setup
 
-This project uses PNPM for package management. To get started:
+This project uses PNPM for package management and Prisma as the ORM. To get started:
 
 1. Install dependencies:
 ```bash
 pnpm install
 ```
 
-2. Start the development server:
+2. Set up Prisma:
+```bash
+# Generate Prisma Client
+pnpm db:generate
+
+# Push the database schema
+pnpm db:push
+```
+
+3. Start the development server:
 ```bash
 pnpm dev
 ```
 
 The application will be available at [http://localhost:3000](http://localhost:3000).
+
+
+Note: Make sure you have a `.env` file with your database connection string:
+```env
+DATABASE_URL="file:./dev.db"
+```
 
 
 ## System Design Considerations
